@@ -19,12 +19,8 @@ import java.awt.Graphics2D;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.prefs.Preferences;
 import javax.imageio.ImageIO;
@@ -51,8 +47,20 @@ public class labels {
     private JCheckBox chkPrezzoGrassetto;
     private JTextField txtAnagrafica;
     private JPanel panelMain;
+    private JTextField txtMovSeparator;
+    private JTextField txtMovNStartingChars;
+    private JTextField txtMovNFinishingChars;
+    private JTextField txtAnaSeparator;
+    private JTextField txtAnaNStartingChars;
+    private JTextField txtAnaNFinishingChars;
+    private JTextField txtMovCodPosition;
+    private JTextField txtAnaCodPosition;
+    private JTextField txtAnaDescrPosition;
+    private JTextField txtAnaPPosition;
+    private JTextField txtMovQPosition;
     private File selectedFile;
     private Preferences pref;
+    private final static float TOTAL_WIDTH = 105.0F;
 
     public static void main(String[] args)
     {
@@ -72,6 +80,17 @@ public class labels {
         chkBordoInferiore.setSelected(pref.getBoolean("BORDOINFERIORE", false));
         txtDimPrezzo.setText(pref.get("DIMPREZZO", "16"));
         chkPrezzoGrassetto.setSelected(pref.getBoolean("PREZZOGRASSETTO", false));
+        txtMovSeparator.setText(pref.get("MOVSEPARATOR",""));
+        txtMovNStartingChars.setText(pref.get("MOVNSTARTINGCHARS",""));
+        txtMovNFinishingChars.setText(pref.get("MOVNFINISHINGCHARS",""));
+        txtMovCodPosition.setText(pref.get("MOVCODPOSITION",""));
+        txtMovQPosition.setText(pref.get("MOVQPOSITION",""));
+        txtAnaSeparator.setText(pref.get("ANASEPARATOR",""));
+        txtAnaNStartingChars.setText(pref.get("ANANSTARTINGCHARS",""));
+        txtAnaNFinishingChars.setText(pref.get("ANANFINISHINGCHARS","0"));
+        txtAnaCodPosition.setText(pref.get("ANACODPOSITION",""));
+        txtAnaDescrPosition.setText(pref.get("ANADESCRPOSITION",""));
+        txtAnaPPosition.setText(pref.get("ANAPPOSITION",""));
 
         this.btnCreaPdfDaCsv.addActionListener(new ActionListener()
         {
@@ -101,79 +120,102 @@ public class labels {
             throws IOException, DocumentException
     {
         this.pref.put("OUTPUTPATH", this.txtOutputPath.getText());
+        String outputPath = txtOutputPath.getText();
         this.pref.put("FILEMOVIMENTO", this.txtMovimento.getText());
         this.pref.put("FILEARTICOLI", this.txtAnagrafica.getText());
         this.pref.put("DIMDESCR", this.txtDimDescr.getText());
+        int dimDescr = Integer.parseInt(txtDimDescr.getText());
         this.pref.put("DIMPREZZO", this.txtDimPrezzo.getText());
+        int dimPrezzo = Integer.parseInt(txtDimPrezzo.getText());
         this.pref.putBoolean("PREZZOGRASSETTO", this.chkPrezzoGrassetto.isSelected());
+        boolean prezzoGrassetto = chkPrezzoGrassetto.isSelected();
         this.pref.putBoolean("BORDOINFERIORE", this.chkBordoInferiore.isSelected());
+        boolean bordoInferiore = chkBordoInferiore.isSelected();
+        pref.put("MOVSEPARATOR",txtMovSeparator.getText());
+        String movSeparator = txtMovSeparator.getText();
+        pref.put("MOVNSTARTINGCHARS",txtMovNStartingChars.getText());
+        int movNStartingChars = Integer.parseInt(txtMovNStartingChars.getText());
+        pref.put("MOVNFINISHINGCHARS",txtMovNFinishingChars.getText());
+        int movNFinishingChars = Integer.parseInt(txtMovNFinishingChars.getText());
+        pref.put("MOVCODPOSITION",txtMovCodPosition.getText());
+        int movCodPosition = Integer.parseInt(txtMovCodPosition.getText())-1;
+        pref.put("MOVQPOSITION",txtMovQPosition.getText());
+        int movQPosition = Integer.parseInt(txtMovQPosition.getText())-1;
+        pref.put("ANASEPARATOR",txtAnaSeparator.getText());
+        String anaSeparator = txtAnaSeparator.getText();
+        pref.put("ANANSTARTINGCHARS",txtAnaNStartingChars.getText());
+        int anaNStartingChars = Integer.parseInt(txtAnaNStartingChars.getText());
+        pref.put("ANANFINISHINGCHARS",txtAnaNFinishingChars.getText());
+        int anaNFinishingChars = Integer.parseInt(txtAnaNFinishingChars.getText());
+        pref.put("ANACODPOSITION",txtAnaCodPosition.getText());
+        int anaCodPosition = Integer.parseInt(txtAnaCodPosition.getText())-1;
+        pref.put("ANADESCRPOSITION",txtAnaDescrPosition.getText());
+        int anaDescrPosition = Integer.parseInt(txtAnaDescrPosition.getText())-1;
+        pref.put("ANAPPOSITION",txtAnaPPosition.getText());
+        int anaPPosition = Integer.parseInt(txtAnaPPosition.getText())-1;
+
         CSVReader movReader = new CSVReader(new FileReader(fMov), ';');
         CSVReader anaReader = new CSVReader(new FileReader(fAna), ';');
-        List ana = anaReader.readAll();
-        String[] row = null;
-        String[] anaRow = null;
-        Document document = new Document();
-        document.setPageSize(new Rectangle(105.0F, 70.0F));
-        document.setMargins(0.0F, 0.0F, 0.0F, 0.0F);
-        String fileName = this.txtOutputPath.getText();
-        PdfWriter writer = PdfWriter.getInstance(document, new FileOutputStream(fileName));
-        document.open();
-        Font f = new Font();
-        f.setFamily("Helvetica");
-        f.setSize(Integer.parseInt(this.txtDimDescr.getText()));
-        Font fPrezzo = new Font();
-        fPrezzo.setFamily("Helvetica");
-        fPrezzo.setSize(Integer.parseInt(this.txtDimPrezzo.getText()));
-        if (this.chkPrezzoGrassetto.isSelected()) {
-            fPrezzo.setStyle(1);
-        }
-        String codiceMov;
-        while ((row = movReader.readNext()) != null)
-        {
-            codiceMov = row[9];
-            for (Object object : ana)
-            {
-                anaRow = (String[])object;
-                //String codiceAna = anaRow[1].substring(1, anaRow[1].length() - 1);
-                String codiceAna = anaRow[1];
-                if (codiceAna.equals(codiceMov))
-                {
-                    int quantità = Integer.parseInt(row[15]);
-                    for (int i = 0; i < quantità; i++)
-                    {
-                        PdfPTable table = new PdfPTable(1);
-                        table.setTotalWidth(105.0F);
-                        PdfPCell cell = new PdfPCell();
-                        cell.setVerticalAlignment(4);
-                        cell.setBorder(0);
-                        //String descrizione = anaRow[2].substring(1, anaRow[2].length() - 1);
-                        String descrizione = anaRow[2];
-                        Paragraph p = new Paragraph(descrizione, f);
-                        cell.addElement(p);
-                        table.addCell(cell);
-                        table.writeSelectedRows(0, -1, document.left(), document.top(), writer.getDirectContent());
-
-                        table = new PdfPTable(1);
-                        table.setTotalWidth(105.0F);
-                        cell = new PdfPCell();
-                        cell.setVerticalAlignment(4);
-                        cell.setBorder(0);
-                        //String prezzo = "€ " + anaRow[12].substring(1, anaRow[12].length() - 1);
-                        String prezzo = "€ " + anaRow[12];
-                        prezzo = prezzo.replace(".", ",");
-                        p = new Paragraph(prezzo, fPrezzo);
-                        cell.addElement(p);
-                        if (this.chkBordoInferiore.isSelected()) {
-                            cell.setBorder(1);
-                        }
-                        table.addCell(cell);
-                        table.writeSelectedRows(0, -1, document.left(document.leftMargin()), table.getTotalHeight() + document.bottom(document.bottomMargin()), writer.getDirectContent());
-                        document.newPage();
+        List<String[]>anaList = anaReader.readAll();
+        List<String[]>movList = movReader.readAll();
+        List<Etichetta>etichette = new ArrayList<Etichetta>();
+        for (String[] movRow : movList){
+            boolean trovato = false;
+            String codiceArticoloMov = movRow[movCodPosition];
+            for (String[] anaRow : anaList){
+                String codiceArticoloAna = anaRow[anaCodPosition];
+                if (codiceArticoloAna.equals(codiceArticoloMov)){
+                    trovato = true;
+                    String descrizione = anaRow[anaDescrPosition];
+                    String prezzo = anaRow[anaPPosition];
+                    int q = Integer.parseInt(movRow[movQPosition]);
+                    for (int x = 0; x<q;x++){
+                        Etichetta etichetta = new Etichetta (descrizione,prezzo);
+                        etichette.add(etichetta);
                     }
                 }
+                if (trovato)break;
             }
         }
-        document.close();
+        if (etichette.size()==0){
+            JOptionPane.showMessageDialog(null,"Nessuna etichetta creata","Messaggio",JOptionPane.OK_OPTION);
+        } else {
+            Font fontDescrizione = new Font();
+            fontDescrizione.setFamily("Helvetica");
+            fontDescrizione.setSize(dimDescr);
+            Font fontPrezzo = new Font();
+            fontPrezzo.setFamily("Helvetica");
+            fontPrezzo.setSize(dimPrezzo);
+            if (prezzoGrassetto)fontPrezzo.setStyle(Font.BOLD);
+            Document document = new Document();
+            document.setPageSize(new Rectangle(105.0F,70.0F));
+            document.setMargins(0.0F,0.0F,0.0F,0.0F);
+            PdfWriter writer= PdfWriter.getInstance(document,new FileOutputStream(outputPath));
+            document.open();
+            for (Etichetta etichetta : etichette){
+                PdfPTable table = new PdfPTable(1);
+                table.setTotalWidth(this.TOTAL_WIDTH);
+                PdfPCell cell = new PdfPCell();
+                cell.setVerticalAlignment(PdfPCell.ALIGN_TOP);
+                cell.setBorder(PdfPCell.NO_BORDER);
+                Paragraph paragraph = new Paragraph(etichetta.getDescrizione(),fontDescrizione);
+                cell.addElement(paragraph);
+                table.addCell(cell);
+                table.writeSelectedRows(0, -1, document.left(), document.top(), writer.getDirectContent());
+                table = new PdfPTable(1);
+                table.setTotalWidth(this.TOTAL_WIDTH);
+                cell = new PdfPCell();
+                cell.setVerticalAlignment(PdfPCell.ALIGN_TOP);
+                cell.setBorder(PdfPCell.NO_BORDER);
+                paragraph = new Paragraph(etichetta.getPrezzoEuro(), fontPrezzo);
+                cell.addElement(paragraph);
+                if (bordoInferiore)cell.setBorder(PdfPCell.ALIGN_CENTER);
+                table.addCell(cell);
+                table.writeSelectedRows(0, -1, document.left(document.leftMargin()), table.getTotalHeight() + document.bottom(document.bottomMargin()), writer.getDirectContent());
+                document.newPage();
+            }
+            document.close();
+        }
     }
 
 }
