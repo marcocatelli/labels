@@ -10,6 +10,7 @@ import com.itextpdf.text.Font;
 import com.itextpdf.text.Image;
 import com.itextpdf.text.Paragraph;
 import com.itextpdf.text.Rectangle;
+import com.itextpdf.text.pdf.BaseFont;
 import com.itextpdf.text.pdf.PdfPCell;
 import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfWriter;
@@ -180,6 +181,7 @@ public class labels {
         if (etichette.size()==0){
             JOptionPane.showMessageDialog(null,"Nessuna etichetta creata","Messaggio",JOptionPane.OK_OPTION);
         } else {
+            //BaseFont baseFont = BaseFont.createFont(BaseFont.HELVETICA,BaseFont.IDENTITY_H,BaseFont.NOT_EMBEDDED);
             Font fontDescrizione = new Font();
             fontDescrizione.setFamily("Helvetica");
             fontDescrizione.setSize(dimDescr);
