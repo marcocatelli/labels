@@ -320,6 +320,30 @@
         </constraints>
         <properties/>
       </component>
+      <component id="d798c" class="javax.swing.JLabel">
+        <constraints>
+          <grid row="10" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="Percorso Excel etichette libere"/>
+        </properties>
+      </component>
+      <component id="d3fe9" class="javax.swing.JTextField" binding="txtEtichetteLibere">
+        <constraints>
+          <grid row="10" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
+            <preferred-size width="150" height="-1"/>
+          </grid>
+        </constraints>
+        <properties/>
+      </component>
+      <component id="3dc45" class="javax.swing.JButton" binding="txtCreaDaExcelLibero">
+        <constraints>
+          <grid row="11" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <text value="Crea da file Excel libero"/>
+        </properties>
+      </component>
     </children>
   </grid>
 </form>

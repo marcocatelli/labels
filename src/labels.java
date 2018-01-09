@@ -59,6 +59,8 @@ public class labels {
     private JTextField txtAnaDescrPosition;
     private JTextField txtAnaPPosition;
     private JTextField txtMovQPosition;
+    private JTextField txtEtichetteLibere;
+    private JButton txtCreaDaExcelLibero;
     private File selectedFile;
     private Preferences pref;
     private final static float TOTAL_WIDTH = 105.0F;
@@ -92,7 +94,7 @@ public class labels {
         txtAnaCodPosition.setText(pref.get("ANACODPOSITION",""));
         txtAnaDescrPosition.setText(pref.get("ANADESCRPOSITION",""));
         txtAnaPPosition.setText(pref.get("ANAPPOSITION",""));
-
+        txtEtichetteLibere.setText(pref.get("FILEEXCELLIBERO",""));
         this.btnCreaPdfDaCsv.addActionListener(new ActionListener()
         {
             public void actionPerformed(ActionEvent e)
@@ -115,44 +117,118 @@ public class labels {
                 }
             }
         });
+        txtCreaDaExcelLibero.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    CreaDaExcelLibero();
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                } catch (DocumentException e1) {
+                    e1.printStackTrace();
+                }
+            }
+        });
+    }
+
+    public void SalvaPreferenze(){
+        this.pref.put("OUTPUTPATH", this.txtOutputPath.getText());
+        this.pref.put("FILEMOVIMENTO", this.txtMovimento.getText());
+        this.pref.put("FILEARTICOLI", this.txtAnagrafica.getText());
+        this.pref.put("DIMDESCR", this.txtDimDescr.getText());
+        this.pref.put("DIMPREZZO", this.txtDimPrezzo.getText());
+        this.pref.putBoolean("PREZZOGRASSETTO", this.chkPrezzoGrassetto.isSelected());
+        this.pref.putBoolean("BORDOINFERIORE", this.chkBordoInferiore.isSelected());
+        pref.put("MOVSEPARATOR",txtMovSeparator.getText());
+        pref.put("MOVNSTARTINGCHARS",txtMovNStartingChars.getText());
+        pref.put("MOVNFINISHINGCHARS",txtMovNFinishingChars.getText());
+        pref.put("MOVCODPOSITION",txtMovCodPosition.getText());
+        pref.put("MOVQPOSITION",txtMovQPosition.getText());
+        pref.put("ANASEPARATOR",txtAnaSeparator.getText());
+        pref.put("ANANSTARTINGCHARS",txtAnaNStartingChars.getText());
+        pref.put("ANANFINISHINGCHARS",txtAnaNFinishingChars.getText());
+        pref.put("ANACODPOSITION",txtAnaCodPosition.getText());
+        pref.put("ANADESCRPOSITION",txtAnaDescrPosition.getText());
+        pref.put("ANAPPOSITION",txtAnaPPosition.getText());
+        pref.put("FILEEXCELLIBERO",txtEtichetteLibere.getText());
+    }
+
+    public void CreaDaExcelLibero() throws IOException, DocumentException {
+        SalvaPreferenze();
+        String outputPath = txtOutputPath.getText();
+        int dimDescr = Integer.parseInt(txtDimDescr.getText());
+        int dimPrezzo = Integer.parseInt(txtDimPrezzo.getText());
+        boolean prezzoGrassetto = chkPrezzoGrassetto.isSelected();
+        boolean bordoInferiore = chkBordoInferiore.isSelected();
+        CSVReader reader = new CSVReader(new FileReader(txtEtichetteLibere.getText()),';');
+        List<String[]>rows = reader.readAll();
+        List<Etichetta>etichette = new ArrayList<Etichetta>();
+        for (String[] row : rows){
+            String descrizione = row[0];
+            String prezzo = row[1];
+            Etichetta etichetta = new Etichetta(descrizione,prezzo);
+            etichette.add(etichetta);
+        }
+        if (etichette.size()==0){
+            JOptionPane.showMessageDialog(null,"nessuna riga trovata","Messaggio",JOptionPane.OK_OPTION);
+        }else{
+            Font fontDescrizione = new Font();
+            fontDescrizione.setFamily("Helvetica");
+            fontDescrizione.setSize(dimDescr);
+            Font fontPrezzo = new Font();
+            fontPrezzo.setFamily("Helvetica");
+            fontPrezzo.setSize(dimPrezzo);
+            if (prezzoGrassetto)fontPrezzo.setStyle(Font.BOLD);
+            Document document = new Document();
+            document.setPageSize(new Rectangle(105.0F,70.0F));
+            document.setMargins(0.0F,0.0F,0.0F,0.0F);
+            PdfWriter writer= PdfWriter.getInstance(document,new FileOutputStream(outputPath));
+            document.open();
+            for (Etichetta etichetta : etichette){
+                PdfPTable table = new PdfPTable(1);
+                table.setTotalWidth(this.TOTAL_WIDTH);
+                PdfPCell cell = new PdfPCell();
+                cell.setVerticalAlignment(PdfPCell.ALIGN_TOP);
+                cell.setBorder(PdfPCell.NO_BORDER);
+                Paragraph paragraph = new Paragraph(etichetta.getDescrizione(),fontDescrizione);
+                cell.addElement(paragraph);
+                table.addCell(cell);
+                table.writeSelectedRows(0, -1, document.left(), document.top(), writer.getDirectContent());
+                table = new PdfPTable(1);
+                table.setTotalWidth(this.TOTAL_WIDTH);
+                cell = new PdfPCell();
+                cell.setVerticalAlignment(PdfPCell.ALIGN_TOP);
+                cell.setBorder(PdfPCell.NO_BORDER);
+                paragraph = new Paragraph(etichetta.getPrezzoEuro(), fontPrezzo);
+                cell.addElement(paragraph);
+                if (bordoInferiore)cell.setBorder(PdfPCell.ALIGN_CENTER);
+                table.addCell(cell);
+                table.writeSelectedRows(0, -1, document.left(document.leftMargin()), table.getTotalHeight() + document.bottom(document.bottomMargin()), writer.getDirectContent());
+                document.newPage();
+            }
+            document.close();
+        }
     }
 
     public void CreaDaCsv(String fMov, String fAna)
             throws IOException, DocumentException
     {
-        this.pref.put("OUTPUTPATH", this.txtOutputPath.getText());
+        SalvaPreferenze();
         String outputPath = txtOutputPath.getText();
-        this.pref.put("FILEMOVIMENTO", this.txtMovimento.getText());
-        this.pref.put("FILEARTICOLI", this.txtAnagrafica.getText());
-        this.pref.put("DIMDESCR", this.txtDimDescr.getText());
         int dimDescr = Integer.parseInt(txtDimDescr.getText());
-        this.pref.put("DIMPREZZO", this.txtDimPrezzo.getText());
         int dimPrezzo = Integer.parseInt(txtDimPrezzo.getText());
-        this.pref.putBoolean("PREZZOGRASSETTO", this.chkPrezzoGrassetto.isSelected());
         boolean prezzoGrassetto = chkPrezzoGrassetto.isSelected();
-        this.pref.putBoolean("BORDOINFERIORE", this.chkBordoInferiore.isSelected());
         boolean bordoInferiore = chkBordoInferiore.isSelected();
-        pref.put("MOVSEPARATOR",txtMovSeparator.getText());
         String movSeparator = txtMovSeparator.getText();
-        pref.put("MOVNSTARTINGCHARS",txtMovNStartingChars.getText());
         int movNStartingChars = Integer.parseInt(txtMovNStartingChars.getText());
-        pref.put("MOVNFINISHINGCHARS",txtMovNFinishingChars.getText());
         int movNFinishingChars = Integer.parseInt(txtMovNFinishingChars.getText());
-        pref.put("MOVCODPOSITION",txtMovCodPosition.getText());
         int movCodPosition = Integer.parseInt(txtMovCodPosition.getText())-1;
-        pref.put("MOVQPOSITION",txtMovQPosition.getText());
         int movQPosition = Integer.parseInt(txtMovQPosition.getText())-1;
-        pref.put("ANASEPARATOR",txtAnaSeparator.getText());
         String anaSeparator = txtAnaSeparator.getText();
-        pref.put("ANANSTARTINGCHARS",txtAnaNStartingChars.getText());
         int anaNStartingChars = Integer.parseInt(txtAnaNStartingChars.getText());
-        pref.put("ANANFINISHINGCHARS",txtAnaNFinishingChars.getText());
         int anaNFinishingChars = Integer.parseInt(txtAnaNFinishingChars.getText());
-        pref.put("ANACODPOSITION",txtAnaCodPosition.getText());
         int anaCodPosition = Integer.parseInt(txtAnaCodPosition.getText())-1;
-        pref.put("ANADESCRPOSITION",txtAnaDescrPosition.getText());
         int anaDescrPosition = Integer.parseInt(txtAnaDescrPosition.getText())-1;
-        pref.put("ANAPPOSITION",txtAnaPPosition.getText());
         int anaPPosition = Integer.parseInt(txtAnaPPosition.getText())-1;
 
         CSVReader movReader = new CSVReader(new FileReader(fMov), ';');
