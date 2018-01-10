@@ -169,7 +169,9 @@ public class labels {
                 String descrizione = row[0];
                 String prezzo = row[1];
                 int q = 1;
-                q = q + Integer.parseInt(row[2])-1;
+                try{
+                    q = q + Integer.parseInt(row[2])-1;
+                } catch (Exception e){}
                 for (int i=0;i<q;i++){
                     Etichetta etichetta = new Etichetta(descrizione,prezzo);
                     etichette.add(etichetta);
