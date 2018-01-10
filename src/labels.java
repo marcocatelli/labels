@@ -163,11 +163,19 @@ public class labels {
         CSVReader reader = new CSVReader(new FileReader(txtEtichetteLibere.getText()),';');
         List<String[]>rows = reader.readAll();
         List<Etichetta>etichette = new ArrayList<Etichetta>();
+        int prima_riga = 1;
         for (String[] row : rows){
-            String descrizione = row[0];
-            String prezzo = row[1];
-            Etichetta etichetta = new Etichetta(descrizione,prezzo);
-            etichette.add(etichetta);
+            if (prima_riga>1){
+                String descrizione = row[0];
+                String prezzo = row[1];
+                int q = 1;
+                q = q + Integer.parseInt(row[2])-1;
+                for (int i=0;i<q;i++){
+                    Etichetta etichetta = new Etichetta(descrizione,prezzo);
+                    etichette.add(etichetta);
+                }
+            }
+            prima_riga++;
         }
         if (etichette.size()==0){
             JOptionPane.showMessageDialog(null,"nessuna riga trovata","Messaggio",JOptionPane.OK_OPTION);
