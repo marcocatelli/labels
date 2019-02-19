@@ -167,7 +167,10 @@ public class labels {
         for (String[] row : rows){
             if (prima_riga>1){
                 String descrizione = row[0];
-                String prezzo = row[1];
+                String prezzo = "";
+                try {
+                    prezzo = row [1];
+                } catch (Exception e){}
                 int q = 1;
                 try{
                     q = q + Integer.parseInt(row[2])-1;
